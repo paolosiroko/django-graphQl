@@ -29,14 +29,19 @@ class AnswerType(DjangoObjectType):
 
 
 class Query(graphene.ObjectType):
-    all_questions = graphene.Field(QuestionType, id=graphene.Int())
-    all_answers = graphene.List(AnswerType, id=graphene.Int())
+    all_categories = graphene.List(CategoryType)
 
-    def resolve_all_questions(self,info, id):
-        return Question.objects.get(pk=id)
+    def resolve_all_categories(self,info):
+        return Category.objects.all()
 
-    def resolve_all_answers(self,info, id):
-        return Answer.objects.filter(question=id)
+    # all_questions = graphene.Field(QuestionType, id=graphene.Int())
+    # all_answers = graphene.List(AnswerType, id=graphene.Int())
+    #
+    # def resolve_all_questions(self,info, id):
+    #     return Question.objects.get(pk=id)
+    #
+    # def resolve_all_answers(self,info, id):
+    #     return Answer.objects.filter(question=id)
 
 
 # CREATE CATEGORY
@@ -85,11 +90,69 @@ class CategoryDeleteMutation(graphene.Mutation):
         category.delete()
         return CategoryDeleteMutation(category=category)
 
+
+# CREATE Quiz
+class QuizCreateMutation(graphene.Mutation):
+
+    class Arguments:
+        title = graphene.String(required = True)
+        category_id = graphene.ID(required=True)
+
+    quiz = graphene.Field(QuizzesType)
+
+    @classmethod
+    def mutate(cls, root, info ,title,category_id):
+        category = Category.objects.get(pk=category_id)
+        quiz = Quizzes(title=title, category=category)
+        quiz.save()
+        return QuizCreateMutation(quiz=quiz)
+
+
+# UpdateQuiz
+class UpdateQuizMutation(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+        title = graphene.String()
+
+    quiz = graphene.Field(QuizzesType)
+
+    def mutate(self, info, id, title=None):
+        try:
+            quiz = Quizzes.objects.get(pk=id)
+        except Quizzes.DoesNotExist:
+            raise Exception("Post not found")
+
+        if title is not None:
+            quiz.title = title
+
+        quiz.save()
+        return UpdateQuizMutation(quiz=quiz)
+
+
+#DELETE Quiz
+class DeleteQuizMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID()
+
+    quiz = graphene.Field(QuizzesType)
+
+    @classmethod
+    def mutate(cls, root, info,id):
+        quiz = Quizzes.objects.get(id=id)
+        quiz.delete()
+        return DeleteQuizMutation(quiz = quiz)
+
+
 class Mutation(graphene.ObjectType):
 
     create_category = CategoryCreateMutation.Field()
     update_category = CategoryUpdateMutation.Field()
     delete_category = CategoryDeleteMutation.Field()
+
+    create_quiz = QuizCreateMutation.Field()
+    update_quiz = UpdateQuizMutation.Field()
+    delete_quiz = DeleteQuizMutation.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
