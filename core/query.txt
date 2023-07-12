@@ -1,0 +1,33 @@
+examples
+
+
+mutation createcategory {
+  createCategory(name:"new name" ){
+    category{
+      name
+    }
+
+  }
+
+}
+
+mutation updatecategory {
+  updateCategory(id:1, name:"new name" ){
+    category{
+      id
+      name
+    }
+
+  }
+
+}
+
+mutation deletecategory {
+  createCategory(id:4 ){
+    category{
+      id
+    }
+
+  }
+
+}
